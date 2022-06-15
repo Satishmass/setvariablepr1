@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="454876c3-8435-4027-b6f1-72f9303897ab" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration1" doc:name="HTTP Request configuration" doc:id="d83d1961-6d45-42f0-b0fc-f50e74950375" >
+		<http:request-connection host="jsonplaceholder.typicode.com" />
+	</http:request-config>
+	<flow name="lakspapr1Flow" doc:id="b8b84ef2-35d6-48eb-803e-ac3e838c2978" >
+		<http:listener doc:name="Listener" doc:id="daa7a56a-abe2-4c65-bfa6-391a4d36d022" config-ref="HTTP_Listener_config" path="/test"/>
+		<logger level="INFO" doc:name="Logger" doc:id="58bbc670-4792-4e8b-b0ed-080149584f5c" message="Calling Database"/>
+		<http:request method="GET" doc:name="Request" doc:id="ff91cf2e-7a36-4a95-a179-4a92234c0dbb" config-ref="HTTP_Request_configuration1" path="/users"/>
+		<ee:transform doc:name="Transform Message" doc:id="ef186e7e-dd8d-4f4e-b95c-132f898fe6db" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map((item,index)->{
+	"ryderid": item.id,
+	"rydername": item.name,
+	"rydercompany":item.company.name
+})]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value="#[10]" doc:name="Set Variable" doc:id="a7d41bc4-a2de-4534-be4c-1e60a250ef84" variableName="ryderid"/>
+		<set-variable doc:name="Set Variable" doc:id="940be2fa-9c9c-4cef-bac1-60bb270b3a8d" variableName="Ashok" value="#[vars.ryderid]"/>
+		<choice doc:name="Choice" doc:id="bb275665-2209-4828-8570-f2d6a4e3e3bf" >
+			<when expression="#[vars.Ashok == 5]">
+				<ee:transform doc:name="Transform Message" doc:id="1910fdcb-5842-45e6-95e6-ae018a99100c" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload filter ((item, index) ->item.ryderid == 10)]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="ab41b58a-ad3e-477d-8ac7-8a8454a64a85" message='"Ryder information"' />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="2f98ecb3-c1ba-45f8-b171-c920d164d41a" message='"No information Ryder"'/>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>
